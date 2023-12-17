@@ -33,7 +33,7 @@ namespace Shipfinity.DataAccess.Repositories.Implementations
         public async Task<Order> GetByIdAsync(int id)
         {
             return await _context.Orders
-                .Include(o => o.Customer)
+                .Include(o => o.User)
                 .Include(o => o.Address)
                 .Include(o => o.ProductOrders)
                 .ThenInclude(po => po.Product)
@@ -60,20 +60,20 @@ namespace Shipfinity.DataAccess.Repositories.Implementations
             await _context.SaveChangesAsync();
         }
 
-        public async Task<List<Order>> GetAllByUserIdAsync(int userId)
+        public async Task<List<Order>> GetAllByUserIdAsync(string userId)
         {
             return await _context.Orders
-                .Include(o => o.Customer)
+                .Include(o => o.User)
                 .Include(o => o.ProductOrders)
                 .ThenInclude(po => po.Product)
-                .Where(o => o.CustomerId == userId)
+                .Where(o => o.UserId == userId)
                 .ToListAsync();
         }
 
         public async Task<List<Order>> GetAllByProductIdAsync(int productId)
         {
             return await _context.Orders
-                .Include(o => o.Customer)
+                .Include(o => o.User)
                 .Include(o => o.ProductOrders)
                 .ThenInclude(po => po.Product)
                 .Where(o => o.ProductOrders.Any(po => po.ProductId == productId))
@@ -92,11 +92,11 @@ namespace Shipfinity.DataAccess.Repositories.Implementations
             return order.Id;
         }
 
-        public async Task<List<Order>> GetAllBySellerAsync(int sellerId)
+        public async Task<List<Order>> GetAllBySellerAsync(string sellerId)
         {
             return await _context.Orders
                 .Include(o => o.Address)
-                .Include(o => o.Customer)
+                .Include(o => o.User)
                 .Include(o => o.ProductOrders)
                 .ThenInclude(po => po.Product)
                 .Where(o => o.ProductOrders.Any(p => p.Product.SellerId == sellerId))

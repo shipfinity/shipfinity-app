@@ -9,7 +9,7 @@ namespace Shipfinity.Domain.Models
         public int Rating { get; set; }
         public int ProductId { get; set; }
         public Product Product { get; set; }
-        public int CustomerId { get; set; }
-        public Customer Customer { get; set; }
+        public string UserId { get; set; }
+        public User User { get; set; }
     }
 }

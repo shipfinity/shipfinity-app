@@ -2,7 +2,7 @@
 {
     public class SellerNotFoundException : Exception
     {
-        public SellerNotFoundException(int id) :base($"Seller with id: {id} not found")
+        public SellerNotFoundException(string id) :base($"Seller with id: {id} not found")
         {}
     }
 }

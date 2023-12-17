@@ -8,7 +8,7 @@ namespace Shipfinity.DTOs.OrderDTOs
         [Required]
         public int Id { get; set; }
         [Required]
-        public int CustomerId { get; set; }
+        public string CustomerId { get; set; }
 
         [Required]
         public DateTime OrderDate { get; set; }

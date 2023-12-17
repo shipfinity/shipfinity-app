@@ -11,7 +11,7 @@ namespace Shipfinity.Mappers
             return new OrderReadDto
             {
                 Id = order.Id,
-                CustomerId = order.CustomerId ?? 0,
+                CustomerId = order.UserId,
                 OrderDate = order.OrderDate,
                 TotalPrice = order.TotalPrice,
                 Status = order.Status,
@@ -21,7 +21,7 @@ namespace Shipfinity.Mappers
 
         public static void ApplyUpdateFromDto(Order order, OrderUpdateDto orderUpdateDto)
         {
-            order.CustomerId = orderUpdateDto.CustomerId;
+            order.UserId = orderUpdateDto.CustomerId;
             order.OrderDate = orderUpdateDto.OrderDate;
             order.TotalPrice = orderUpdateDto.TotalPrice;
             order.Status = orderUpdateDto.Status;

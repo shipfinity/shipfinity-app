@@ -13,6 +13,6 @@ namespace Shipfinity.Domain.Models
         [MaxLength(50)]
         public string Country { get; set; }
         public List<Order> Orders { get; set; } = new();
-        public List<Customer> Customers { get; set; } = new();
+        public List<User> Users { get; set; } = new();
     }
 }

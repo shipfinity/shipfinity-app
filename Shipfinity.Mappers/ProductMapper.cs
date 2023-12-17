@@ -51,7 +51,7 @@ namespace Shipfinity.Mappers
                 Comment = reviewProduct.Comment,
                 Rating = reviewProduct.Rating,
                 ProductId = reviewProduct.ProductId,
-                CustomerId = reviewProduct.CustomerId
+                CustomerId = reviewProduct.UserId
             };
         }
 

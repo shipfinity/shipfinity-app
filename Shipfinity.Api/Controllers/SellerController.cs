@@ -1,7 +1,9 @@
-﻿using Microsoft.AspNetCore.Mvc;
+﻿using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Mvc;
 using Shipfinity.DTOs.SellerDTO_s;
 using Shipfinity.Services.Interfaces;
 using Shipfinity.Shared.Exceptions;
+using System.Security.Claims;
 
 namespace Shipfinity.Api.Controllers
 {
@@ -14,11 +16,15 @@ namespace Shipfinity.Api.Controllers
         {
             _sellerService = sellerService;
         }
+
         [HttpPost("ResetPassword")]
+        [Authorize]
         public async Task<IActionResult> ResetPassword([FromBody] SellerPasswordResetDto passwordResetDto)
         {
             try
             {
+                string userId = User.FindFirstValue("id");
+                passwordResetDto.SellerId = userId;
                 await _sellerService.ResetPasswordAsync(passwordResetDto);
                 return Ok("Password successfully reset.");
             }
