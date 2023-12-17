@@ -1,15 +1,14 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore;
 using Shipfinity.Domain.Models;
 
 namespace Shipfinity.DataAccess.Context
 {
-    public class AppDbContext : DbContext
+    public class AppDbContext : IdentityDbContext<User>
     {
         public DbSet<Product> Products { get; set; }
         public DbSet<Category> Categories { get; set; }
         public DbSet<Order> Orders { get; set; }
-        public DbSet<Customer> Customers { get; set; }
-        public DbSet<Seller> Sellers { get; set; }
         public DbSet<ReviewProduct> ProductReviews { get; set; }
         public DbSet<Message> Messages { get; set; }
         public DbSet<Address> Addresses { get; set; }
@@ -24,15 +23,21 @@ namespace Shipfinity.DataAccess.Context
         {
             base.OnModelCreating(modelBuilder);
 
-            modelBuilder.Entity<Customer>()
-                .HasMany(c => c.Orders)
-                .WithOne(o => o.Customer)
-                .HasForeignKey(o => o.CustomerId);
+            modelBuilder.Entity<User>()
+                .HasMany(u => u.Orders)
+                .WithOne(o => o.User)
+                .HasForeignKey(o => o.UserId);
 
             modelBuilder.Entity<Order>()
                 .HasMany(o => o.ProductOrders)
                 .WithOne(p => p.Order)
                 .HasForeignKey(o => o.OrderId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            modelBuilder.Entity<Product>()
+                .HasOne(p => p.Seller)
+                .WithMany(u => u.Products)
+                .HasForeignKey(p => p.SellerId)
                 .OnDelete(DeleteBehavior.Restrict);
                 
             modelBuilder.Entity<Product>()
@@ -46,23 +51,18 @@ namespace Shipfinity.DataAccess.Context
                 .WithOne(p => p.Category)
                 .HasForeignKey(p => p.CategoryId);
 
-            modelBuilder.Entity<Seller>()
-                .HasMany(s => s.Products)
-                .WithOne(p => p.Seller)
-                .HasForeignKey(p => p.SellerId);
-
             modelBuilder.Entity<Product>()
                 .HasMany(p => p.ProductReviews)
                 .WithOne(rp => rp.Product)
                 .HasForeignKey(rp => rp.ProductId);
            
             modelBuilder.Entity<ReviewProduct>()
-                .HasOne(rp => rp.Customer)
+                .HasOne(rp => rp.User)
                 .WithMany(c => c.ReviewProducts)
-                .HasForeignKey(rp => rp.CustomerId);
+                .HasForeignKey(rp => rp.UserId);
 
             modelBuilder.Entity<Address>()
-                .HasMany(a => a.Customers)
+                .HasMany(a => a.Users)
                 .WithOne(c => c.Address)
                 .HasForeignKey(c => c.AddressId);
 
@@ -73,12 +73,11 @@ namespace Shipfinity.DataAccess.Context
                 .OnDelete(DeleteBehavior.Restrict);
 
             modelBuilder.Entity<PaymentInfo>()
-                .HasOne(pi => pi.Customer)
+                .HasOne(pi => pi.User)
                 .WithMany(c => c.PaymentInfos)
-                .HasForeignKey(pi => pi.CustomerId)
+                .HasForeignKey(pi => pi.UserId)
                 .OnDelete(DeleteBehavior.Restrict);
 
-            modelBuilder.Entity<PaymentInfo>().HasIndex(p => p.CustomerId);
             modelBuilder.Entity<PaymentInfo>().HasIndex(p => p.CardNumber);
             modelBuilder.Entity<PaymentInfo>().HasIndex(p => p.ExpirationDate);
         }

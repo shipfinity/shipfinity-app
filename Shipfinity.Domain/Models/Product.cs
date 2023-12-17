@@ -10,8 +10,8 @@ namespace Shipfinity.Domain.Models
         public string Description { get; set; } = string.Empty;
         public Category Category { get; set; }
         public int CategoryId { get; set; }
-        public Seller Seller { get; set; }
-        public int SellerId { get; set; }
+        public User Seller { get; set; }
+        public string SellerId { get; set; }
         [Range(0, 999999)]
         public double Price { get; set; }
         [Range(0, 100)]

@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using Microsoft.AspNetCore.Identity;
+using Microsoft.Extensions.Configuration;
 using Microsoft.IdentityModel.Tokens;
 using Shipfinity.DataAccess.Repositories.Interfaces;
 using Shipfinity.Domain.Enums;
@@ -7,7 +8,6 @@ using Shipfinity.DTOs.CustomerDTOs;
 using Shipfinity.DTOs.SellerDTO_s;
 using Shipfinity.DTOs.UserDTOs;
 using Shipfinity.Mappers;
-using Shipfinity.Services.Helpers;
 using Shipfinity.Services.Interfaces;
 using Shipfinity.Shared.Exceptions;
 using System.IdentityModel.Tokens.Jwt;
@@ -18,30 +18,30 @@ namespace Shipfinity.Services.Implementations
 {
     public class AuthService : IAuthService
     {
-        private readonly ICustomerRepository _customerRepository;
-        private readonly ISellerRepository _sellerRepository;
+        private readonly UserManager<User> _userManager;
         private readonly IConfiguration _configuration;
-        public AuthService(ICustomerRepository customerRepository,ISellerRepository sellerRepository, IConfiguration configuration)
+        private readonly IUserRepository _userRepository;
+        public AuthService(UserManager<User> userManager, IConfiguration configuration, IUserRepository userRepository)
         {
-            _customerRepository = customerRepository;
-            _sellerRepository = sellerRepository;
+            _userManager = userManager;
             _configuration = configuration;
+            _userRepository = userRepository;
         }
 
         public async Task<CustomerLoginResponseDto> LoginCustomer(UserLoginDto dto)
         {
-            Customer customer = await _customerRepository.GetByUsernameAsync(dto.Username);
-            if (customer == null)
+            User customer = await _userManager.FindByNameAsync(dto.Username);
+            if (customer == null || customer.Role != Roles.Customer)
             {
                 throw new BadCredentialsException();
             }
 
-            if (!customer.VerifyPassword(dto.Password))
+            if (!await _userManager.CheckPasswordAsync(customer, dto.Password))
             {
                 throw new BadCredentialsException();
             }
             string token = GenerateToken(customer);
-            return customer.ToLoginResponse(token);
+            return customer.ToCustomerLoginResponse(token);
         }
 
         public async Task RegisterCustomer(CustomerRegisterDto dto)
@@ -51,17 +51,25 @@ namespace Shipfinity.Services.Implementations
                 throw new UserRegisterException("Username password and email are required fields");
             }
 
-            if (await _customerRepository.GetByUsernameAsync(dto.Username.Trim()) != null)
+            if (dto.Password != dto.ConfirmPassword)
+            {
+                throw new UserRegisterException("Password does not match");
+            }
+
+            if (await _userManager.FindByNameAsync(dto.Username) != null)
             {
                 throw new UserRegisterException("Username is already taken");
             }
 
-            Customer customer = dto.ToCustomer();
-            AuthHelper.HashPassword(dto.Password, out byte[] hash, out byte[] salt);
-            customer.PasswordHash = hash;
-            customer.PasswordSalt = salt;
-
-            await _customerRepository.InsertAsync(customer);
+            User customer = new User
+            {
+                UserName = dto.Username,
+                Email = dto.Email,
+                FirstName = dto.FirstName,
+                LastName = dto.LastName,
+                Role = Roles.Customer
+            };
+            await _userManager.CreateAsync(customer, dto.Password);
         }
 
         public async Task RegisterSeller(SellerRegisterDto dto)
@@ -72,39 +80,45 @@ namespace Shipfinity.Services.Implementations
                 throw new UserRegisterException("Username, password, and email are required fields");
             }
 
-           
-            if (await _sellerRepository.GetByUsernameAsync(dto.Username.Trim()) != null)
+            if (dto.Password != dto.ConfirmPassword)
+            {
+                throw new UserRegisterException("Password does not match");
+            }
+
+
+            if (await _userManager.FindByNameAsync(dto.Username) != null)
             {
                 throw new UserRegisterException("Username is already taken");
             }
 
-            Seller seller = dto.ToSeller();
-            AuthHelper.HashPassword(dto.Password, out byte[] hash, out byte[] salt);
-            seller.PasswordHash = hash;
-            seller.PasswordSalt = salt;
-
-
-            await _sellerRepository.InsertAsync(seller);
+            User seller = new User
+            {
+                UserName = dto.Username,
+                Email = dto.Email,
+                Name = dto.Name,
+                Role = Roles.Seller
+            };
+            await _userManager.CreateAsync(seller, dto.Password);
         }
-        public async Task<SellerLoginResponseDto> LoginSeller(UserLoginDto dto)
+        public async Task<CustomerLoginResponseDto> LoginSeller(UserLoginDto dto)
         {
-            Seller seller = await _sellerRepository.GetByUsernameAsync(dto.Username);
-            if (seller == null)
+            User seller = await _userManager.FindByNameAsync(dto.Username);
+            if (seller == null || (seller.Role != Roles.Seller && seller.Role != Roles.Admin))
             {
                 throw new BadCredentialsException();
             }
 
-            if (!seller.VerifyPassword(dto.Password))
+            if (!await _userManager.CheckPasswordAsync(seller, dto.Password))
             {
                 throw new BadCredentialsException();
             }
             string token = GenerateToken(seller);
-            return seller.ToLoginResponse(token);
+            return seller.ToCustomerLoginResponse(token);
         }
 
         public async Task<bool> InitialAdmin(SellerRegisterDto dto)
         {
-            int adminsCount = await _sellerRepository.CountAdminsAsync();
+            int adminsCount = await _userRepository.CountByRole(Roles.Admin);
             if (adminsCount > 0) return false;
 
             if (string.IsNullOrEmpty(dto.Username) || string.IsNullOrEmpty(dto.Password) || string.IsNullOrEmpty(dto.Email))
@@ -113,22 +127,23 @@ namespace Shipfinity.Services.Implementations
             }
 
 
-            if (await _sellerRepository.GetByUsernameAsync(dto.Username.Trim()) != null)
+            if (await _userManager.FindByNameAsync(dto.Username) != null)
             {
                 throw new UserRegisterException("Username is already taken");
             }
 
-            Seller seller = dto.ToSeller();
-            AuthHelper.HashPassword(dto.Password, out byte[] hash, out byte[] salt);
-            seller.PasswordHash = hash;
-            seller.PasswordSalt = salt;
-            seller.Role = Roles.Admin;
-
-            await _sellerRepository.InsertAsync(seller);
+            User user = new User
+            {
+                UserName = dto.Username,
+                Email = dto.Email,
+                Name = dto.Name,
+                Role = Roles.Admin
+            };
+            await _userManager.CreateAsync(user, dto.Password);
             return true;
         }
 
-        private string GenerateToken(BaseUser user)
+        private string GenerateToken(User user)
         {
             SymmetricSecurityKey securityKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:Key"]));
             SigningCredentials credentials = new SigningCredentials(securityKey, SecurityAlgorithms.HmacSha256Signature);
@@ -136,7 +151,7 @@ namespace Shipfinity.Services.Implementations
             Claim[] claims = new Claim[]
             {
                 new Claim("id", user.Id.ToString()),
-                new Claim(ClaimTypes.NameIdentifier, user.Username),
+                new Claim(ClaimTypes.NameIdentifier, user.UserName),
                 new Claim(ClaimTypes.Email, user.Email),
                 new Claim(ClaimTypes.Role, user.Role),
             };

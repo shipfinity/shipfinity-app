@@ -6,7 +6,7 @@ namespace Shipfinity.Services.Interfaces
     {
         Task<List<ProductReadDto>> GetAllProductsAsync();
         Task<ProductDetailsDto> GetProductByIdAsync(int id);
-        Task<ProductReadDto> CreateProductAsync(ProductCreateDto productCreateDto, int sellerId);
+        Task<ProductReadDto> CreateProductAsync(ProductCreateDto productCreateDto, string sellerId);
         Task UpdateProductAsync(int id, ProductUpdateDto productUpdateDto);
         Task DeleteProductAsync(int id);
         Task<List<ProductReadDto>> GetProductsByCategoryAsync(int categoryId);
@@ -16,6 +16,6 @@ namespace Shipfinity.Services.Interfaces
         Task UpdateProductPhotoUrl(int productId, string photoUrl);
         Task<List<ProductReadDto>> SearchProductsByKeywordAsync(string keyword);
         Task<ReviewProductReadDto> CreateReviewProductAsync(int productId, ReviewProductDto reviewProductDto);
-        Task<List<ProductReadDto>> GetProductsBySellerIdAsync(int sellerId);
+        Task<List<ProductReadDto>> GetProductsBySellerIdAsync(string sellerId);
     }
 }

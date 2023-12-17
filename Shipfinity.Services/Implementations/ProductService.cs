@@ -29,7 +29,7 @@ namespace Shipfinity.Services.Implementations
             return ProductMapper.MapToDetailsDto(product);
         }
 
-        public async Task<ProductReadDto> CreateProductAsync(ProductCreateDto productCreateDto, int sellerId)
+        public async Task<ProductReadDto> CreateProductAsync(ProductCreateDto productCreateDto, string sellerId)
         {
             var newProduct = ProductMapper.MapToModel(productCreateDto);
             newProduct.SellerId = sellerId;
@@ -97,7 +97,7 @@ namespace Shipfinity.Services.Implementations
                 Comment = reviewProductDto.Comment,
                 Rating = reviewProductDto.Rating,
                 ProductId = productId,
-                CustomerId = reviewProductDto.CustomerId
+                UserId = reviewProductDto.CustomerId
             };
 
             await _productRepository.AddProductReviewAsync(newReview);
@@ -124,7 +124,7 @@ namespace Shipfinity.Services.Implementations
             return response;
         }
 
-        public async Task<List<ProductReadDto>> GetProductsBySellerIdAsync(int sellerId)
+        public async Task<List<ProductReadDto>> GetProductsBySellerIdAsync(string sellerId)
         {
             var products = await _productRepository.GetProductsBySellerIdAsync(sellerId);
             return products.Select(ProductMapper.MapToReadDto).ToList();

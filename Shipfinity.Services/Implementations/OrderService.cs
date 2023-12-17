@@ -19,17 +19,17 @@ namespace Shipfinity.Services.Implementations
             _stringEncoder = stringEncoder;
         }
 
-        public async Task<OrderReadDto> CreateOrderAsync(OrderCreateDto orderCreateDto, int customerId)
+        public async Task<OrderReadDto> CreateOrderAsync(OrderCreateDto orderCreateDto, string customerId)
         {
             var newOrder = new Order();
-            newOrder.Customer = null;
-            if (customerId != 0)
+            newOrder.User = null;
+            if (!string.IsNullOrEmpty(customerId))
             {
-                newOrder.CustomerId = customerId;
+                newOrder.UserId = customerId;
             }
             else
             {
-                newOrder.CustomerId = null;
+                newOrder.UserId = null;
             }
             newOrder.Email = orderCreateDto.Email;
             newOrder.Status = OrderStatus.Pending;
@@ -54,8 +54,8 @@ namespace Shipfinity.Services.Implementations
             else
             {
                 newOrder.PaymentInfo = payment;
-                newOrder.PaymentInfo.CustomerId = null;
-                newOrder.PaymentInfo.Customer = null;
+                newOrder.PaymentInfo.UserId = null;
+                newOrder.PaymentInfo.User = null;
             }
 
             newOrder.OrderDate = DateTime.Now;
@@ -110,7 +110,7 @@ namespace Shipfinity.Services.Implementations
             return orders.Select(OrderMappers.MapToReadDto).ToList();
         }
 
-        public async Task<List<OrderSellerListDto>> GetBySellerIdAsync(int sellerId)
+        public async Task<List<OrderSellerListDto>> GetBySellerIdAsync(string sellerId)
         {
             var orders = await _orderRepository.GetAllBySellerAsync(sellerId);
             return orders.Select(x => x.ToSellerOrderList()).ToList();
@@ -134,11 +134,11 @@ namespace Shipfinity.Services.Implementations
             return orders.Select(OrderMappers.MapToReadDto).ToList();
         }
 
-        public async Task<List<OrderReadDto>> GetOrderByUserIdAsync(int userId)
+        public async Task<List<OrderReadDto>> GetOrderByUserIdAsync(string userId)
         {
             var orders = await _orderRepository.GetAllByUserIdAsync(userId);
 
-            if (!orders.Any()) throw new OrderNotFoundException(userId);
+            if (!orders.Any()) throw new OrderNotFoundException(0);
 
             return orders.Select(OrderMappers.MapToReadDto).ToList();
         }

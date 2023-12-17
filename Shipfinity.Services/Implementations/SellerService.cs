@@ -1,4 +1,6 @@
-﻿using Shipfinity.DataAccess.Repositories.Interfaces;
+﻿using Microsoft.AspNetCore.Identity;
+using Shipfinity.DataAccess.Repositories.Interfaces;
+using Shipfinity.Domain.Models;
 using Shipfinity.DTOs.SellerDTO_s;
 using Shipfinity.Services.Helpers;
 using Shipfinity.Services.Interfaces;
@@ -8,10 +10,10 @@ namespace Shipfinity.Services.Implementations
 {
     public class SellerService : ISellerService
     {
-        private readonly ISellerRepository _sellerRepository;
-        public SellerService(ISellerRepository sellerRepository)
+        private readonly UserManager<User> _userManager;
+        public SellerService(UserManager<User> userManager)
         {
-            _sellerRepository = sellerRepository;
+            _userManager = userManager;
         }
 
         public async Task ResetPasswordAsync(SellerPasswordResetDto passwordResetDto)
@@ -19,19 +21,14 @@ namespace Shipfinity.Services.Implementations
             if (passwordResetDto.NewPassword != passwordResetDto.ConfirmNewPassword)
                 throw new BadRequestException("New password and confirmation do not match.");
 
-            var seller = await _sellerRepository.GetByIdAsync(passwordResetDto.SellerId);
+            var seller = await _userManager.FindByIdAsync(passwordResetDto.SellerId);
             if (seller == null)
                 throw new SellerNotFoundException(passwordResetDto.SellerId);
 
-            if (!seller.VerifyPassword(passwordResetDto.OldPassword))
+            if (!await _userManager.CheckPasswordAsync(seller, passwordResetDto.OldPassword))
                 throw new BadRequestException("Old password is incorrect.");
 
-            AuthHelper.HashPassword(passwordResetDto.NewPassword, out byte[] newHash, out byte[] newSalt);
-
-            seller.PasswordHash = newHash;
-            seller.PasswordSalt = newSalt;
-
-            await _sellerRepository.UpdateAsync(seller);
+            await _userManager.ChangePasswordAsync(seller, passwordResetDto.OldPassword, passwordResetDto.NewPassword);
         }
     }
 }

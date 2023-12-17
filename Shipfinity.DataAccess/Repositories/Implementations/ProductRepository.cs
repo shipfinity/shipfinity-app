@@ -132,7 +132,7 @@ namespace Shipfinity.DataAccess.Repositories.Implementations
                 .ToListAsync();
         }
 
-        public async Task<List<Product>> GetProductsBySellerIdAsync(int sellerId)
+        public async Task<List<Product>> GetProductsBySellerIdAsync(string sellerId)
         {
             return await _context.Products
                 .Where(p => p.SellerId == sellerId)

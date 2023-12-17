@@ -76,7 +76,7 @@ namespace Shipfinity.Api.Controllers
         {
             try
             {
-                if (!int.TryParse(User.FindFirstValue("id"), out int userId)) return BadRequest();
+                string userId = User.FindFirstValue("id");
                 return Ok(await _orderService.GetBySellerIdAsync(userId));
             }
             catch (Exception ex)
@@ -92,7 +92,7 @@ namespace Shipfinity.Api.Controllers
         {
             try
             {
-                if (!int.TryParse(User.FindFirstValue("id"), out int userId)) return BadRequest();
+                string userId = User.FindFirstValue("id");
                 var orders = await _orderService.GetOrderByUserIdAsync(userId);
 
                 if (orders == null || !orders.Any())
@@ -139,8 +139,8 @@ namespace Shipfinity.Api.Controllers
         {
             try
             {
-                int.TryParse(User.FindFirstValue("id"), out int customerId);
-                var order = await _orderService.CreateOrderAsync(orderCreateDto, customerId);
+                string userId = User.FindFirstValue("id");
+                var order = await _orderService.CreateOrderAsync(orderCreateDto, userId);
                 await _emailService.SendEmailAsync(new()
                 {
                     To = orderCreateDto.Email,
@@ -215,7 +215,7 @@ namespace Shipfinity.Api.Controllers
         {
             try
             {
-                int.TryParse(User.FindFirstValue("id"), out int customerId);
+                string userId = User.FindFirstValue("id");
                 var orderEmail = await _orderService.ShipOrderAsync(dto.OrderId);
                 await _emailService.SendEmailAsync(new()
                 {

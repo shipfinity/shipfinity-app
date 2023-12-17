@@ -67,7 +67,7 @@ namespace Shipfinity.Api.Controllers
         {
             try
             {
-                int userId = int.Parse(User.FindFirstValue("id"));
+                string userId = User.FindFirstValue("id");
                 var product = await _productService.CreateProductAsync(productCreateDto, userId);
                 return CreatedAtAction(nameof(GetProductById), new { id = product.Id }, product);
             }
@@ -261,9 +261,9 @@ namespace Shipfinity.Api.Controllers
         }
 
         [HttpGet("seller/{sellerId}")]
-        public async Task<IActionResult> GetProductsBySellerId(int sellerId)
+        public async Task<IActionResult> GetProductsBySellerId(string sellerId)
         {
-            if (sellerId <= 0 || !ModelState.IsValid)
+            if (string.IsNullOrWhiteSpace(sellerId) || !ModelState.IsValid)
             {
                 return BadRequest("Invalid seller ID");
             }
